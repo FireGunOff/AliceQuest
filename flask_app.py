@@ -1,12 +1,10 @@
 from flask import Flask, request
 import logging
 import json
-import random
 
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
-
 
 sessionStorage = {}
 
@@ -55,7 +53,7 @@ def handle_dialog(res, req):
             sessionStorage[user_id]['first_name'] = first_name
             sessionStorage[user_id]['guessed_cities'] = []
             res['response']['text'] = 'Приятно познакомиться, ' + first_name.title() + '. Я Алиса. ' \
-                                                                                       'Хочешь пройти квест "Побег из тюрьмы"?'
+                                                                                       'Готов пройти квест "Побег из тюрьмы"?'
             res['response']['buttons'] = [
                 {
                     'title': 'Да',
@@ -81,7 +79,7 @@ def handle_dialog(res, req):
 
                 if len(sessionStorage[user_id]['guessed_cities']) == 3:
 
-                    res['response']['text'] = 'Ты отгадал все города!'
+                    res['response']['text'] = 'Ты уже прошел квест!'
                     res['end_session'] = True
 
                 else:
@@ -94,7 +92,7 @@ def handle_dialog(res, req):
                 res['response']['text'] = 'Ну и ладно!'
                 res['end_session'] = True
             elif req['request']['original_utterance'].lower() == 'помощь':
-                res['response']['text'] = 'Привет. В этом квесте тебе придется сбежать из тюрьмы используя свой интеллект и интуицую.'
+                res['response']['text'] = 'Привет. Это квест побег из тюрьмы, здесь тебе придется думать логично, так как любое неправильное действие от тебя - ты проиграешь игру. Готов?'
             else:
                 res['response']['text'] = 'Не понял ответа! Так да или нет?'
                 res['response']['buttons'] = [
@@ -114,7 +112,7 @@ def handle_dialog(res, req):
                     }
                 ]
         elif req['request']['original_utterance'].lower() == 'помощь':
-                res['response']['text'] = 'Привет. В этом квесте тебе придется сбежать из тюрьмы используя свой интеллект и интуицую.'
+                res['response']['text'] = 'Привет. Это квест побег из тюрьмы, здесь тебе придется думать логично, так как любое неправильное действие от тебя - ты проиграешь игру. Готов?'
         else:
 
             play_game(res, req)
@@ -123,49 +121,57 @@ def handle_dialog(res, req):
 def play_game(res, req):
 
     user_id = req['session']['user_id']
-    attempt = sessionStorage[user_id]['attempt']
 
-    if attempt == 1:
-        res['response']['card'] = {}
-        res['response']['card']['title'] = 'Вы находитесь в камере'
+    res['response']['card']['title'] = 'Вы находитесь в камере для заключенных, охранник повел вас в столовую, как вы пойдете?'
+    res['response']['buttons'] = [
+        {
+            'title': 'Смирно',
+            'hide': True
+        },
+        {
+            'title': 'Попытаюсь вырваться',
+            'hide': True
+        },
+        {
+            'title': 'Помощь',
+            'hide': True
+        }
+    ]
+    if req == 'Смирно':
+
+        res['response']['text'] = 'Вы прошли в столовую. Здесь есть несколько выходов, куда вы пойдете?'
         res['response']['buttons'] = [
             {
-                'title': 'Пойти на выход из камеры',
+                'title': 'Прямо',
                 'hide': True
+
             },
             {
-                'title': 'Остаться в камере',
+                'title': 'Налево',
                 'hide': True
+
+            },
+            {
+                'title': 'Направо',
+                'hide': True
+
             },
             {
                 'title': 'Помощь',
                 'hide': True
             }
         ]
+        if req == 'Прямо':
 
-    else:
-
-        if get_city(req) == 'Пойти на выход из камеры':
-
-            res['response']['text'] = 'Впереди стоолвая'
+            res['response']['text'] = 'Вы увидели небо и солнце, ослепляющее своими лучами ваши глаза. Впереди вы видите главный выход их тюрьмы, а слева тропинка ведет ко двору, что вы будете делать?'
             res['response']['buttons'] = [
                 {
-                    'title': 'Влево',
+                    'title': 'К выходу',
                     'hide': True
 
                 },
                 {
-                    'title': 'Вправо',
-                    'hide': True
-
-                },
-                {
-                    'title': 'Вниз',
-                    'hide': True
-
-                },
-                {
-                    'title': 'Вверх',
+                    'title': 'Во двор',
                     'hide': True
 
                 },
@@ -174,31 +180,95 @@ def play_game(res, req):
                     'hide': True
                 }
             ]
-            sessionStorage[user_id]['game_started'] = False
+
+            if req == 'Во двор':
+
+                res['response']['text'] = 'Вы увидели двух заключенных, один строго режима, другой среднего, к кому подойдете поговорить?'
+                res['response']['buttons'] = [
+                    {
+                        'title': 'К строгому',
+                        'hide': True
+
+                    },
+                    {
+                        'title': 'К среднему',
+                        'hide': True
+
+                    },
+                    {
+                        'title': 'Помощь',
+                        'hide': True
+                    }
+                ]
+
+                if req == 'К среднему':
+
+                    res['response'][
+                        'text'] = 'Вы рассказываете ему про план побега. Он готовит для вас нужные инструменты и вы спокойно сбегаете из тюрьмы.'
+                    res['response'][
+                        'text'] = 'Поздравляю, вы выйграли! Концовка №1'
+                    return
+
+                else:
+
+                    res['response'][
+                        'text'] = 'You died. Вы говорите ему про свой план побега, но он рассказывает про это охранникам, так как злой из-за того, что его посадили сюда ни за что.'
+                    res['response']['buttons'] = [
+                        {
+                            'title': 'Помощь',
+                            'hide': True
+                        }
+                    ]
+                    return
+
+            else:
+
+                res['response']['text'] = 'You died. Охранники увидели, как вы направляетесь к выходу - Попытка побега.'
+                return
+
+        if req == 'Налево':
+
+            res['response']['text'] = 'You died. Вы увидели, как вашего брата бьют, вступились за него и вас посадили'
             return
 
-        else:
+        if req == 'Направо':
 
-            res['response']['text'] = 'Неправильно'
-            if attempt == 3:
-                res['response']['text'] = 'You died'
+            res['response']['text'] = 'Вы нашли большой блок камер. К заключенному с каким режимом вы подойдете, чтобы обговорить побег?'
+            res['response']['buttons'] = [
+                {
+                    'title': 'К легкому',
+                    'hide': True
 
-    sessionStorage[user_id]['attempt'] += 1
+                },
+                {
+                    'title': 'К среднему',
+                    'hide': True
 
+                },
+                {
+                    'title': 'Помощь',
+                    'hide': True
+                }
+            ]
+            if req == 'К строгому':
 
+                res['response'][
+                    'text'] = 'Вы рассказываете ему про план побега. Он готовит для вас нужные инструменты и вы спокойно сбегаете из тюрьмы.'
+                res['response'][
+                    'text'] = 'Поздравляю, вы выйграли! Концовка №2'
+                return
 
-def get_city(req):
-
-    for entity in req['request']['nlu']['entities']:
-
-        if entity['type'] == 'YANDEX.GEO':
-
-            if 'city' in entity['value'].keys():
-                return entity['value']['city']
             else:
-                return None
 
-    return None
+                res['response'][
+                    'text'] = 'You died. Он был крысой.'
+                return
+
+    else:
+
+        res['response']['text'] = 'You died. Охранник посадил вас в карцер'
+        return
+
 
 
 def get_first_name(req):
